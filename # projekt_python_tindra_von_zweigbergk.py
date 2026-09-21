@@ -227,7 +227,7 @@ while True:
 
         analyze_price(date, area)
 
-        # Hej
+
     if val == '2':
         date_yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d") # Gårdagens datum
 
