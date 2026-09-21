@@ -70,20 +70,37 @@ class PriceAnalyzer:
 
     def find_cheapest_period(self):
         cheap = self.find_cheap()
-
-        return f"Under dessa tider är elen som billigast"
+        return f"Billigast el: {cheap.start_time}-{cheap.end_time} ({cheap.price:.2f} SEK/kWh)"
 
     def find_most_expensive_period(self):
         expensive = self.find_expensive()
-        return
+        return f"Dyraste el: {expensive.start_time}-{expensive.end_time} ({expensive.price:.2f} SEK/kWh)"
 
 
 class AreaPrice(ElectricityPrice):
+    AREA_NAMES = {
+        "SE1": "Norra Sverige (Luleå)",
+        "SE2": "Norra Mellansverige (Sundsvall)",
+        "SE3": "Södra Mellansverige (STockholm)",
+        "SE4": "Södra Sverige (Malmö)",
+    }
+
     def __init__(self, date, start_time, end_time, price, area):
         super().__init__(date, start_time, end_time, price, area)
 
+        self.region_name = self.AREA_NAMES.get(area, "Okänt elområde")
+
     def area_description(self):
-        return
+        return f"{self.area} - {self.region_name}"
+
+    def get_status_text(self):
+        if self.is_expensive():
+            return "Elen är dyr"
+
+        elif self.is_cheap():
+            return "Elen är billig"
+
+        return "Normalt elpris"
 
 
 # ==============================================================================================================
@@ -106,7 +123,7 @@ def create_price_objects(raw_data, date, area):
     objects = []
 
     for item in raw_data:
-        obj = ElectricityPrice(
+        obj = AreaPrice(
             date = date,
             start_time = item["time_start"][11:16],
             end_time = item["time_end"][11:16],
@@ -124,7 +141,6 @@ def analyze_price(date, area):
 
     if raw_data:
         objects = create_price_objects(raw_data, date, area)
-
         analyzer = PriceAnalyzer(objects)
 
         most_expensive = analyzer.find_expensive()
@@ -134,9 +150,10 @@ def analyze_price(date, area):
 
                     # Printa det analysen får fram
         
+        print(f"Anlys för {objects[0].area_description()} ({date})")
         print(f"\nMedelpriset för elen är {average:.2f} SEK/kWh")
         print(f"Högsta priset på elen är {most_expensive.price:.2f} SEK/kWh klockan {most_expensive.start_time}")
-        print(f"Lägsta priset för elen är {cheapest.price:.2f} SEK/kWh klockan {cheapest.start_time}")
+        print(f"Lägsta priset för elen är {cheapest.price:.2f} SEK/kWh klockan {cheapest.start_time} ({cheapest.get_status_text()})")
         print(f"Priskillnaden är {diff:.2f} SEK/kWh\n")
 
         # Spara till CSV filen
@@ -144,7 +161,6 @@ def analyze_price(date, area):
 
         # Visa diagrammet (måste sen stänga ner fliken för diagrammet för att programmet ska fortsätta)
         print_diagram(objects, date, area)
-        # Hejsan
 
     else:
         print("Kunde inte hitta")
@@ -163,7 +179,7 @@ def print_diagram(price_list, date, area):
 
     plt.plot(times, prices, marker="o")     # Skapar linjen i diagrammet
 
-    plt.title(f"Diagram för elpriset för {area} för datum {date} ")
+    plt.title(f"Diagram för elpriset för elområde {area} för datum {date} ")
     plt.xlabel("Tid")  
     plt.ylabel("Pris i SEK/kWh")
 
@@ -229,11 +245,14 @@ while True:
         analyze_price(date, area)
 
 
-    if val == '2':
+    elif val == '2':
         date_yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d") # Gårdagens datum
 
         area = validate_area()
         analyze_price(date_yesterday, area)
 
-    if val == '3':
+    elif val == '3':
         break
+
+    else:
+        print("Ogiltigt val, vänligen försök igen!\n")
