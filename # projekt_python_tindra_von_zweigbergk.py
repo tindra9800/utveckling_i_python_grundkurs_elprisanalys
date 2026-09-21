@@ -69,11 +69,12 @@ class PriceAnalyzer:
         return self.find_expensive().price - self.find_cheap().price
 
     def find_cheapest_period(self):
-        cheapest_price = self.find_cheap()
+        cheap = self.find_cheap()
 
         return f"Under dessa tider är elen som billigast"
 
     def find_most_expensive_period(self):
+        expensive = self.find_expensive()
         return
 
 
@@ -162,7 +163,7 @@ def print_diagram(price_list, date, area):
 
     plt.plot(times, prices, marker="o")     # Skapar linjen i diagrammet
 
-    plt.title("Diagram för elpriset under dygnet: ")
+    plt.title(f"Diagram för elpriset för {area} för datum {date} ")
     plt.xlabel("Tid")  
     plt.ylabel("Pris i SEK/kWh")
 
@@ -174,7 +175,7 @@ def print_diagram(price_list, date, area):
 
 def save_to_csv(price_list, filename="elpriser.csv"):
     try:
-        with open(filename, "w", newline="", encoding="utf-8") as file:
+        with open(filename, "a", newline="", encoding="utf-8") as file: # "a" för att den ska spara historik och utf-8 för åäö
 
             writer = csv.writer(file)
 
