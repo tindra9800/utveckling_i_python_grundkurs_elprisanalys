@@ -6,6 +6,7 @@
 # Importering av bibliotek
 # ==============================================================================================================
 
+import os
 import csv
 import requests
 import matplotlib.pyplot as plt
@@ -81,7 +82,7 @@ class AreaPrice(ElectricityPrice):
     AREA_NAMES = {
         "SE1": "Norra Sverige (Luleå)",
         "SE2": "Norra Mellansverige (Sundsvall)",
-        "SE3": "Södra Mellansverige (STockholm)",
+        "SE3": "Södra Mellansverige (Stockholm)",
         "SE4": "Södra Sverige (Malmö)",
     }
 
@@ -150,9 +151,9 @@ def analyze_price(date, area):
 
                     # Printa det analysen får fram
         
-        print(f"Anlys för {objects[0].area_description()} ({date})")
+        print(f"Analys för {objects[0].area_description()} ({date})")
         print(f"\nMedelpriset för elen är {average:.2f} SEK/kWh")
-        print(f"Högsta priset på elen är {most_expensive.price:.2f} SEK/kWh klockan {most_expensive.start_time}")
+        print(f"Högsta priset på elen är {most_expensive.price:.2f} SEK/kWh klockan {most_expensive.start_time} ({most_expensive.get_status_text()})")
         print(f"Lägsta priset för elen är {cheapest.price:.2f} SEK/kWh klockan {cheapest.start_time} ({cheapest.get_status_text()})")
         print(f"Priskillnaden är {diff:.2f} SEK/kWh\n")
 
@@ -163,7 +164,7 @@ def analyze_price(date, area):
         print_diagram(objects, date, area)
 
     else:
-        print("Kunde inte hitta")
+        print("Kunde inte hitta några elpriser :(")
 
 
 
@@ -171,9 +172,9 @@ def print_diagram(price_list, date, area):
     times = []          
     prices = []
 
-    for price in price_list: # Rad 147-149 går igenom ElectricityPrice objektet
-        times.append(price.start_time)
-        prices.append(price.price)
+    for price in price_list: # Går igenom ElectricityPrice objektet
+        times.append(price.start_time) # Går igenom ElectricityPrice objektet
+        prices.append(price.price) # Går igenom ElectricityPrice objektet
 
     plt.figure(figsize=(12, 6))
 
@@ -191,21 +192,20 @@ def print_diagram(price_list, date, area):
 
 def save_to_csv(price_list, filename="elpriser.csv"):
     try:
+        file_exists = os.path.exists(filename)
+
         with open(filename, "a", newline="", encoding="utf-8") as file: # "a" för att den ska spara historik och utf-8 för åäö
 
             writer = csv.writer(file)
 
-            # Rubriker
-            writer.writerow([
-                "date",
-                "area",
-                "start_time",
-                "end_time",
-                "price"
-            ])
+            if not file_exists:
+                writer.writerow(
+                    ["date", "area", "start_time", "end_time", "price" ]
+                )
+
+            for price in price_list:
 
             # Skriver varje ElectricityPrice-objekt
-            for price in price_list:
                 writer.writerow([
                     price.date,
                     price.area,
